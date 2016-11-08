@@ -435,6 +435,7 @@ class LogFileObject : public base::Logger {
   string base_filename_;
   string symlink_basename_;
   string filename_extension_;     // option users can specify (eg to add port#)
+  string time_pid_string_;        // timestamp postfix
   FILE* file_;
   LogSeverity severity_;
   uint32 bytes_since_flush_;
@@ -958,6 +959,7 @@ bool LogFileObject::CreateLogfile(const string& time_pid_string) {
 #endif
   }
 
+  time_pid_string_ = time_pid_string;
   return true;  // Everything worked
 }
 
@@ -972,12 +974,28 @@ void LogFileObject::Write(bool force_flush,
     return;
   }
 
-  if (static_cast<int>(file_length_ >> 20) >= MaxLogSize() ||
+  /*if (static_cast<int>(file_length_ >> 20) >= MaxLogSize() ||
       PidHasChanged()) {
     if (file_ != NULL) fclose(file_);
     file_ = NULL;
     file_length_ = bytes_since_flush_ = 0;
     rollover_attempt_ = kRolloverAttemptFrequency-1;
+  }*/
+
+  struct ::tm tm_time;
+  localtime_r(&timestamp, &tm_time);
+  ostringstream time_pid_stream;
+  time_pid_stream.fill('0');
+  time_pid_stream << 1900+tm_time.tm_year
+      << setw(2) << 1+tm_time.tm_mon
+      << setw(2) << tm_time.tm_mday
+      << setw(2) << tm_time.tm_hour;
+  const string& time_pid_string = time_pid_stream.str();
+  if (time_pid_string_ != time_pid_string) {
+      if (file_ != NULL) fclose(file_);
+      file_ = NULL;
+      file_length_ = bytes_since_flush_ = 0; 
+      rollover_attempt_ = kRolloverAttemptFrequency-1;
   }
 
   // If there's no destination file, make one before outputting
@@ -988,7 +1006,7 @@ void LogFileObject::Write(bool force_flush,
     if (++rollover_attempt_ != kRolloverAttemptFrequency) return;
     rollover_attempt_ = 0;
 
-    struct ::tm tm_time;
+    /*struct ::tm tm_time;
     localtime_r(&timestamp, &tm_time);
 
     // The logfile's filename will have the date/time & pid in it
@@ -1003,7 +1021,7 @@ void LogFileObject::Write(bool force_flush,
                     << setw(2) << tm_time.tm_sec
                     << '.'
                     << GetMainThreadPid();
-    const string& time_pid_string = time_pid_stream.str();
+    const string& time_pid_string = time_pid_stream.str();*/
 
     if (base_filename_selected_) {
       if (!CreateLogfile(time_pid_string)) {

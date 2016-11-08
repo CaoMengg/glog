@@ -3,3 +3,5 @@ module.  Documentation for the implementation is in doc/.
 
 See INSTALL for (generic) installation instructions for C++: basically
    ./configure && make && make install
+
+## 日志切分修改为按小时 见logging.cc
