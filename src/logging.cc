@@ -986,12 +986,15 @@ void LogFileObject::Write(bool force_flush,
   localtime_r(&timestamp, &tm_time);
   ostringstream time_pid_stream;
   time_pid_stream.fill('0');
-  time_pid_stream << 1900+tm_time.tm_year
+  time_pid_stream << GetMainThreadPid()
+      << '.'
+      << 1900+tm_time.tm_year
       << setw(2) << 1+tm_time.tm_mon
       << setw(2) << tm_time.tm_mday
       << setw(2) << tm_time.tm_hour;
   const string& time_pid_string = time_pid_stream.str();
-  if (time_pid_string_ != time_pid_string) {
+  if (time_pid_string_ != time_pid_string ||
+    PidHasChanged()) {
       if (file_ != NULL) fclose(file_);
       file_ = NULL;
       file_length_ = bytes_since_flush_ = 0; 
