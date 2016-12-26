@@ -837,6 +837,7 @@ LogFileObject::LogFileObject(LogSeverity severity,
     base_filename_((base_filename != NULL) ? base_filename : ""),
     symlink_basename_(glog_internal_namespace_::ProgramInvocationShortName()),
     filename_extension_(),
+    time_pid_string_(),
     file_(NULL),
     severity_(severity),
     bytes_since_flush_(0),
@@ -907,7 +908,7 @@ bool LogFileObject::CreateLogfile(const string& time_pid_string) {
   string string_filename = base_filename_+filename_extension_+
                            time_pid_string;
   const char* filename = string_filename.c_str();
-  int fd = open(filename, O_WRONLY | O_CREAT | O_EXCL, FLAGS_logfile_mode);
+  int fd = open(filename, O_WRONLY | O_CREAT, FLAGS_logfile_mode);
   if (fd == -1) return false;
 #ifdef HAVE_FCNTL
   // Mark the file close-on-exec. We don't really care if this fails
@@ -986,9 +987,7 @@ void LogFileObject::Write(bool force_flush,
   localtime_r(&timestamp, &tm_time);
   ostringstream time_pid_stream;
   time_pid_stream.fill('0');
-  time_pid_stream << GetMainThreadPid()
-      << '.'
-      << 1900+tm_time.tm_year
+  time_pid_stream << 1900+tm_time.tm_year
       << setw(2) << 1+tm_time.tm_mon
       << setw(2) << tm_time.tm_mday
       << setw(2) << tm_time.tm_hour;
